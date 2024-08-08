@@ -1,4 +1,4 @@
-# Siran's Scribbles :link: https://siranchao.github.io 
+# Siran's Scribbles :link: https://blog.siran.dev/
 ### :page_facing_up: [1](https://siranchao.github.io/tag.html) 
 ### :speech_balloon: 0 
 ### :hibiscus: 14 
