@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html data-color-mode="light" data-dark-theme="dark" data-light-theme="light" lang="zh-CN">
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="content-type" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />
+    
+    <link rel="icon" href="https://avatars.githubusercontent.com/u/79330375?v=4"><script>
+        let theme = localStorage.getItem("meek_theme") || "light";
+        document.documentElement.setAttribute("data-color-mode", theme);
+    </script>
+<meta name="description" content="## 前言
+
+每次提及 `Hook` 时，只能说得出 `useState` 以及 `useEffect` 来。">
+<meta property="og:title" content="React Hook 从入门应用到编写自定义 - Everything you need to known about React Hook">
+<meta property="og:description" content="## 前言
+
+每次提及 `Hook` 时，只能说得出 `useState` 以及 `useEffect` 来。">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://siranchao.github.io/post/React%20Hook%20-cong-ru-men-ying-yong-dao-bian-xie-zi-ding-yi-%20-%20Everything%20you%20need%20to%20known%20about%20React%20Hook.html">
+<meta property="og:image" content="https://avatars.githubusercontent.com/u/79330375?v=4">
+<title>React Hook 从入门应用到编写自定义 - Everything you need to known about React Hook</title>
+<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />
+
+
+</head>
+<style>
+body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;padding: 45px;font-size: 16px;font-family: sans-serif;line-height: 1.25;}
+#header{display:flex;padding-bottom:8px;border-bottom: 1px solid var(--borderColor-muted, var(--color-border-muted));margin-bottom: 16px;}
+#footer {margin-top:64px; text-align: center;font-size: small;}
+
+</style>
+
+<style>
+.postTitle{margin: auto 0;font-size:40px;font-weight:bold;}
+.title-right{display:flex;margin:auto 0 0 auto;}
+.title-right .circle{padding: 14px 16px;margin-right:8px;}
+#postBody{border-bottom: 1px solid var(--color-border-default);padding-bottom:36px;}
+#postBody hr{height:2px;}
+#cmButton{height:48px;margin-top:48px;}
+#comments{margin-top:64px;}
+.g-emoji{font-size:24px;}
+@media (max-width: 600px) {
+    body {padding: 8px;}
+    .postTitle{font-size:24px;}
+}
+.copy-feedback {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    color: var(--color-fg-on-emphasis);
+    background-color: var(--color-fg-muted);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
+</style>
+
+
+
+
+<body>
+    <div id="header">
+<h1 class="postTitle">React Hook 从入门应用到编写自定义 - Everything you need to known about React Hook</h1>
+<div class="title-right">
+    <a href="https://siranchao.github.io" id="buttonHome" class="btn btn-invisible circle" title="首页">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathHome" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+    <a href="https://github.com/siranchao/siranchao.github.io/issues/2" target="_blank" class="btn btn-invisible circle" title="Issue">
+        <svg class="octicon" width="16" height="16">
+            <path id="pathIssue" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+    
+
+    <a class="btn btn-invisible circle" onclick="modeSwitch();" title="切换主题">
+        <svg class="octicon" width="16" height="16" >
+            <path id="themeSwitch" fill-rule="evenodd"></path>
+        </svg>
+    </a>
+
+</div>
+</div>
+    <div id="content">
+<div class="markdown-body" id="postBody"><h2>前言</h2>
+<p>每次提及 <code class="notranslate">Hook</code> 时，只能说得出 <code class="notranslate">useState</code> 以及 <code class="notranslate">useEffect</code> 来。是得好好总结总结，全面认识 <code class="notranslate">Hook</code> 。</p>
+<p>本文分两大板块：</p>
+<ol>
+<li><code class="notranslate">Hook</code> 基础，官方 <code class="notranslate">Hook</code> 的使用；</li>
+<li>自定义 <code class="notranslate">Hook</code> ，常见 <code class="notranslate">Hook</code> 的实现。</li>
+</ol>
+<p><a href="https://link.juejin.cn?target=https%3A%2F%2Fgithub.com%2Fshiyou00%2Ffhooks" title="https://github.com/shiyou00/fhooks" rel="nofollow">点击查看&gt;&gt;&gt;代码托管地址</a></p>
+<h2>Hook 基础</h2>
+<p><code class="notranslate">React Hooks</code> 的意思是，组件尽量写成纯函数，如果需要外部功能和副作用，就用钩子把外部代码"钩"进来。 <code class="notranslate">React Hooks</code> 就是那些钩子。</p>
+<p>看一个简单的例子：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">BaseHook</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">name</span><span class="pl-kos">,</span><span class="pl-s1">setName</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-s">'jack'</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">const</span> <span class="pl-en">handleClick</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-en">setName</span><span class="pl-kos">(</span><span class="pl-s">'frank'</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+            <span class="pl-kos">{</span>name<span class="pl-kos">}</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-s1">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span>handleClick<span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-s1">设置姓名</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span>
+<span class="pl-pds">        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<p>原本函数组件是无状态的，现在利用 <code class="notranslate">useState Hook</code> ，你会发现它拥有了类似 <code class="notranslate">Class</code> 组件中 <code class="notranslate">state</code> 了。</p>
+<h3>Hook 解决什么问题</h3>
+<p>在类组件中有以下几个问题：</p>
+<ul>
+<li>状态逻辑难复用，通常使用 <code class="notranslate">render props</code> （渲染属性）或者 <code class="notranslate">HOC</code> （高阶组件）来处理；</li>
+<li>类组件中到处都是对状态的访问和处理，导致组件难以拆分成更小的组件；</li>
+<li>事件 <code class="notranslate">this</code> 指向问题。</li>
+</ul>
+<p><code class="notranslate">Hook</code> 的优点：</p>
+<ul>
+<li>更好的逻辑复用；</li>
+<li>副作用的关注点分离；</li>
+<li><code class="notranslate">Hook</code> 在 <code class="notranslate">function</code> 组件中使用，不用维护复杂的生命周期，不用担心 <code class="notranslate">this</code> 指向问题。</li>
+</ul>
+<h3>Hook 使用规则</h3>
+<ul>
+<li>只能在函数内部的最外层调用 <code class="notranslate">Hook</code> ，不要在循环、条件判断或者子函数中调用；</li>
+<li>只能在 <code class="notranslate">React</code> 的函数组件中调用 <code class="notranslate">Hook</code> ，不要在其他 <code class="notranslate">JavaScript</code> 函数中调用。</li>
+</ul>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">BaseHook</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">let</span> <span class="pl-s1">name</span><span class="pl-kos">,</span><span class="pl-s1">setName</span><span class="pl-kos">;</span>
+    <span class="pl-k">if</span><span class="pl-kos">(</span><span class="pl-c1">true</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+        <span class="pl-kos">[</span><span class="pl-s1">name</span><span class="pl-kos">,</span><span class="pl-s1">setName</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-s">'jack'</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+    <span class="pl-k">const</span> <span class="pl-en">handleClick</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-en">setName</span><span class="pl-kos">(</span><span class="pl-s">'frank'</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+            <span class="pl-kos">{</span>name<span class="pl-kos">}</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-s1">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span>handleClick<span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-s1">设置姓名</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span>
+<span class="pl-pds">        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<p>编译结果：<br>
+<a target="_blank" rel="noopener noreferrer" href=""><img src="" alt="image.png" style="max-width: 100%;"></a><br>
+这是 <code class="notranslate">eslint</code> 插件： <code class="notranslate">eslint-plugin-react-hooks</code> 做的校验。</p>
+<h3>useState</h3>
+<p><code class="notranslate">useState()</code> 用于为函数组件引入状态（ <code class="notranslate">state</code> ）。纯函数不能有状态，所以把状态放在钩子里面。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">state</span><span class="pl-kos">,</span> <span class="pl-s1">setState</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-s1">initialState</span><span class="pl-kos">)</span><span class="pl-kos">;</span></pre></div>
+<p>特性：</p>
+<ul>
+<li>（1） <code class="notranslate">initialState</code> 参数只会在组件的初始化渲染中起作用，后续渲染时会被忽略；</li>
+<li>（2）如果初始 <code class="notranslate">state</code> 需要通过复杂计算获得，则可以传入一个函数，在函数中计算并返回初始的 <code class="notranslate">state</code> ，此函数只在初始渲染时被调用。</li>
+</ul>
+<p>[1] 实例：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">UseStateHook</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">count</span><span class="pl-kos">,</span> <span class="pl-s1">setCount</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-c1">0</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+      <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+          <span class="pl-kos">&lt;</span><span class="pl-smi">p</span><span class="pl-kos">&gt;</span><span class="pl-smi">You</span> <span class="pl-s1">clicked</span> <span class="pl-kos">{</span><span class="pl-s1">count</span><span class="pl-kos">}</span> <span class="pl-s1">times</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>p&gt;</span><span class="pl-c1"></span>
+          <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-en">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-en">setCount</span><span class="pl-kos">(</span><span class="pl-s1">count</span> <span class="pl-c1">+</span> <span class="pl-c1">1</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span>
+              <span class="pl-smi">Click</span> <span class="pl-s1">me</span>
+          <span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span>
+<span class="pl-pds">      <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span><span class="pl-s1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<p>代码解析：</p>
+<ul>
+<li>声明一个叫 <code class="notranslate">"count"</code> 的 <code class="notranslate">state</code> 变量，初始值为0，后续通过 <code class="notranslate">setCount</code> 改变它能让视图重新渲染；</li>
+<li>初始化时 <code class="notranslate">count=0</code> 只会在组件的初始渲染中起作用，后续渲染时会被忽略。</li>
+</ul>
+<p>[2] 计算 <code class="notranslate">state</code>：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">ComputeState</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">count</span><span class="pl-kos">,</span><span class="pl-s1">setCount</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-k">const</span> <span class="pl-s1">newCount</span> <span class="pl-c1">=</span> <span class="pl-smi">Math</span><span class="pl-kos">.</span><span class="pl-en">random</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+        <span class="pl-k">return</span> <span class="pl-s1">newCount</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+            <span class="pl-kos">&lt;</span><span class="pl-smi">p</span><span class="pl-kos">&gt;</span><span class="pl-smi">You</span> <span class="pl-s1">clicked</span> <span class="pl-kos">{</span><span class="pl-s1">count</span><span class="pl-kos">}</span> <span class="pl-s1">times</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>p&gt;</span><span class="pl-c1"></span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-en">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-en">setCount</span><span class="pl-kos">(</span><span class="pl-s1">count</span> <span class="pl-c1">+</span> <span class="pl-c1">1</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span>
+                <span class="pl-smi">Click</span> <span class="pl-s1">me</span> <span class="pl-smi">ComputeState</span>
+            <span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span>
+<span class="pl-pds">        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span><span class="pl-s1"></span>
+        <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<h3>useReducer</h3>
+<p><code class="notranslate">React</code>本身不提供状态管理功能，通常需要使用外部库，这方面最常用的库是 <code class="notranslate">Redux</code> 。</p>
+<p><code class="notranslate">Redux</code> 的核心概念是，组件发出 <code class="notranslate">action</code> 与状态管理器通信。状态管理器收到 <code class="notranslate">action</code> 以后，使用 <code class="notranslate">Reducer</code> 函数算出新的状态， <code class="notranslate">Reducer</code> 函数的形式是 <code class="notranslate">(state, action) =&gt; newState</code> 。</p>
+<p><code class="notranslate">useReducer</code> 是一个用于状态管理的 <code class="notranslate">Hook Api</code> 。是 <code class="notranslate">useState</code> 的替代方案。<br>
+那么 <code class="notranslate">useReducer</code> 和 <code class="notranslate">useState</code> 的区别是什么呢？答案是 <code class="notranslate">useState</code> 是使用 <code class="notranslate">useReducer</code> 构建的。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">state</span><span class="pl-kos">,</span> <span class="pl-s1">dispatch</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useReducer</span><span class="pl-kos">(</span><span class="pl-s1">reducer</span><span class="pl-kos">,</span> <span class="pl-s1">initialState</span><span class="pl-kos">)</span><span class="pl-kos">;</span></pre></div>
+<p>上面是 <code class="notranslate">useReducer()</code> 的基本用法，它接受 <code class="notranslate">Reducer</code> 函数和状态的初始值作为参数，返回一个数组。数组的第一个成员是状态的当前值，第二个成员是发送 <code class="notranslate">action</code>  的 <code class="notranslate">dispatch</code> 函数。</p>
+<p>计数器示例：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-s1">initialState</span> <span class="pl-c1">=</span> <span class="pl-c1">0</span><span class="pl-kos">;</span>
+
+<span class="pl-k">const</span> <span class="pl-en">reducer</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">state</span><span class="pl-kos">,</span> <span class="pl-s1">action</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+  <span class="pl-k">switch</span> <span class="pl-kos">(</span><span class="pl-s1">action</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+    <span class="pl-k">case</span> <span class="pl-s">'increment'</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">state</span> <span class="pl-c1">+</span> <span class="pl-c1">1</span>
+    <span class="pl-k">case</span> <span class="pl-s">'decrement'</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">state</span> <span class="pl-c1">-</span> <span class="pl-c1">1</span>
+    <span class="pl-k">case</span> <span class="pl-s">'reset'</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">initialState</span>
+    <span class="pl-k">default</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">state</span>
+  <span class="pl-kos">}</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">UseReducerHook</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">count</span><span class="pl-kos">,</span> <span class="pl-s1">dispatch</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useReducer</span><span class="pl-kos">(</span><span class="pl-s1">reducer</span><span class="pl-kos">,</span> <span class="pl-s1">initialState</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+            <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span><span class="pl-smi">Count</span> <span class="pl-c1">-</span> <span class="pl-kos">{</span>count<span class="pl-kos">}</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>div&gt;</span><span class="pl-c1"></span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-en">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-en">dispatch</span><span class="pl-kos">(</span><span class="pl-s">'increment'</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-s1">增加</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span><span class="pl-c1"></span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-en">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-en">dispatch</span><span class="pl-kos">(</span><span class="pl-s">'decrement'</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-s1">减少</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span><span class="pl-c1"></span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-en">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-en">dispatch</span><span class="pl-kos">(</span><span class="pl-s">'reset'</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-s1">重置</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span>
+<span class="pl-pds">      <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span><span class="pl-s1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<p><a target="_blank" rel="noopener noreferrer" href=""><img src="" alt="count.gif" style="max-width: 100%;"></a></p>
+<p>由于 <code class="notranslate">Hooks</code> 可以提供共享状态和 <code class="notranslate">Reducer</code> 函数，所以它在这些方面可以取代 <code class="notranslate">Redux</code> 。但是它没法提供中间件（ <code class="notranslate">middleware</code> ）这样高级功能。</p>
+<h3>useContext</h3>
+<p>我们知道 <code class="notranslate">React</code> 提供了 <code class="notranslate">context</code> ，让我们在层级很深的组件中共享状态。在函数组件中就是使用 <code class="notranslate">useContext</code> 。</p>
+<p>还是上面那个计数器的案例，我们使用 <code class="notranslate">useContext</code> 来改造下：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-smi">AppContext</span> <span class="pl-c1">=</span> <span class="pl-smi">React</span><span class="pl-kos">.</span><span class="pl-en">createContext</span><span class="pl-kos">(</span><span class="pl-kos">{</span><span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+<span class="pl-k">const</span> <span class="pl-s1">initialState</span> <span class="pl-c1">=</span> <span class="pl-c1">0</span><span class="pl-kos">;</span>
+
+<span class="pl-k">const</span> <span class="pl-en">reducer</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">state</span><span class="pl-kos">,</span> <span class="pl-s1">action</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+  <span class="pl-k">switch</span> <span class="pl-kos">(</span><span class="pl-s1">action</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+    <span class="pl-k">case</span> <span class="pl-s">'increment'</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">state</span> <span class="pl-c1">+</span> <span class="pl-c1">1</span>
+    <span class="pl-k">case</span> <span class="pl-s">'decrement'</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">state</span> <span class="pl-c1">-</span> <span class="pl-c1">1</span>
+    <span class="pl-k">case</span> <span class="pl-s">'reset'</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">initialState</span>
+    <span class="pl-k">default</span>:
+      <span class="pl-k">return</span> <span class="pl-s1">state</span>
+  <span class="pl-kos">}</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">ShowCount</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">{</span> count <span class="pl-kos">}</span> <span class="pl-c1">=</span> <span class="pl-en">useContext</span><span class="pl-kos">(</span><span class="pl-smi">AppContext</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span><span class="pl-smi">Count</span> <span class="pl-c1">-</span> <span class="pl-kos">{</span>count<span class="pl-kos">}</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>div&gt;</span><span class="pl-c1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">Action</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">{</span> dispatch <span class="pl-kos">}</span> <span class="pl-c1">=</span> <span class="pl-en">useContext</span><span class="pl-kos">(</span><span class="pl-smi">AppContext</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-c1">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-smi">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-c1">dispatch</span><span class="pl-kos">(</span><span class="pl-s">'increment'</span><span class="pl-c1"></span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-smi">增加</span><span class="pl-kos">&lt;</span><span class="pl-c1">/</span><span class="pl-smi">button</span><span class="pl-kos">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-smi">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-c1">dispatch</span><span class="pl-kos">(</span><span class="pl-s">'decrement'</span><span class="pl-c1"></span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-smi">减少</span><span class="pl-kos">&lt;</span><span class="pl-c1">/</span><span class="pl-smi">button</span><span class="pl-kos">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-smi">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-c1">dispatch</span><span class="pl-kos">(</span><span class="pl-s">'reset'</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-smi">重置</span><span class="pl-kos">&lt;</span><span class="pl-c1">/</span><span class="pl-smi">button</span><span class="pl-kos">&gt;</span>
+        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span><span class="pl-kos">&gt;</span><span class="pl-s1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">UseReducerHook</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">count</span><span class="pl-kos">,</span> <span class="pl-s1">dispatch</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useReducer</span><span class="pl-kos">(</span><span class="pl-s1">reducer</span><span class="pl-kos">,</span> <span class="pl-s1">initialState</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-c1">&lt;</span><span class="pl-smi">AppContext</span><span class="pl-kos">.</span><span class="pl-smi">Provider</span> <span class="pl-smi">value</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">{</span>
+            <span class="pl-c1">count</span><span class="pl-kos">,</span>
+            <span class="pl-c1">dispatch</span>
+          <span class="pl-kos">}</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span>
+            <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+                <span class="pl-kos">&lt;</span><span class="pl-smi">ShowCount</span> <span class="pl-c1">/</span><span class="pl-kos">&gt;</span>
+                <span class="pl-kos">&lt;</span><span class="pl-smi">Action</span> <span class="pl-c1">/</span><span class="pl-kos">&gt;</span>
+            <span class="pl-kos">&lt;</span><span class="pl-c1">/</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+        <span class="pl-kos">&lt;</span><span class="pl-c1">/</span><span class="pl-smi">AppContext</span><span class="pl-kos">.</span><span class="pl-smi">Provider</span><span class="pl-kos">&gt;</span><span class="pl-s1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<p>这里主要是把展示数字和操纵按钮分离成不同的两个组件，并且在父组件中创建一个 <code class="notranslate">context</code> ，下发 <code class="notranslate">count</code> 与 <code class="notranslate">dispatch</code> 。这样所有子组件，孙子组件都可以共享 <code class="notranslate">context</code> 中数据。</p>
+<h3>useEffect</h3>
+<p><code class="notranslate">useEffect</code> 就是一个 <code class="notranslate">Effect Hook</code> ，给函数组件增加了操作副作用的能力。它跟 <code class="notranslate">class</code> 组件中的 <code class="notranslate">componentDidMount</code> 、 <code class="notranslate">componentDidUpdate</code>  和 <code class="notranslate">componentWillUnmount</code> 具有相同的用途，只不过被合并成了一个 <code class="notranslate">API</code> 。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span>  <span class="pl-c1">=&gt;</span>  <span class="pl-kos">{</span>
+  <span class="pl-c">// Async Action</span>
+<span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-s1">dependencies</span><span class="pl-kos">]</span><span class="pl-kos">)</span></pre></div>
+<ul>
+<li>第一个参数是一个函数，异步操作的代码放在里面。</li>
+<li>第二个参数是一个数组，用于给出 <code class="notranslate">Effect</code> 的依赖项，只要这个数组发生变化， <code class="notranslate">useEffect()</code> 就会执行。第二个参数可以省略，这时每次组件渲染时，就会执行 <code class="notranslate">useEffect()</code> 。</li>
+<li><code class="notranslate">React</code> 将在 <code class="notranslate">DOM</code> 更新之后调用它， <code class="notranslate">React</code> 保证了每次运行 <code class="notranslate">useEffect</code> 的时候， <code class="notranslate">DOM</code> 已经更新完毕。</li>
+</ul>
+<p>示例：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">import</span> <span class="pl-smi">React</span><span class="pl-kos">,</span><span class="pl-kos">{</span><span class="pl-s1">useState</span><span class="pl-kos">,</span><span class="pl-s1">useEffect</span><span class="pl-kos">}</span> <span class="pl-k">from</span> <span class="pl-s">'react'</span><span class="pl-kos">;</span>
+
+<span class="pl-k">const</span> <span class="pl-smi">Person</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-kos">{</span> personId <span class="pl-kos">}</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">loading</span><span class="pl-kos">,</span> <span class="pl-s1">setLoading</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-c1">true</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">person</span><span class="pl-kos">,</span> <span class="pl-s1">setPerson</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-kos">{</span><span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+      <span class="pl-en">setLoading</span><span class="pl-kos">(</span><span class="pl-c1">true</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-en">fetch</span><span class="pl-kos">(</span><span class="pl-s">`https://v1/api/people/<span class="pl-s1"><span class="pl-kos">${</span><span class="pl-s1">personId</span><span class="pl-kos">}</span></span>/`</span><span class="pl-kos">)</span> <span class="pl-c">// 这是一个虚拟的请求</span>
+        <span class="pl-kos">.</span><span class="pl-en">then</span><span class="pl-kos">(</span><span class="pl-s1">response</span> <span class="pl-c1">=&gt;</span> <span class="pl-s1">response</span><span class="pl-kos">.</span><span class="pl-en">json</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">)</span>
+        <span class="pl-kos">.</span><span class="pl-en">then</span><span class="pl-kos">(</span><span class="pl-s1">data</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+          <span class="pl-en">setPerson</span><span class="pl-kos">(</span><span class="pl-s1">data</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+          <span class="pl-en">setLoading</span><span class="pl-kos">(</span><span class="pl-c1">false</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+        <span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-s1">personId</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">if</span> <span class="pl-kos">(</span><span class="pl-s1">loading</span> <span class="pl-c1">===</span> <span class="pl-c1">true</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+      <span class="pl-k">return</span> <span class="pl-kos">&lt;</span><span class="pl-smi">p</span><span class="pl-kos">&gt;</span><span class="pl-smi">Loading</span> ...<span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>p&gt;;</span><span class="pl-c1"></span>
+    <span class="pl-kos">}</span>
+
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+      <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">p</span><span class="pl-kos">&gt;</span><span class="pl-smi">You</span>'re viewing: {person.name}&lt;/p&gt;
+        &lt;p&gt;Height: {person.height}&lt;/p&gt;
+        &lt;p&gt;Mass: {person.mass}&lt;/p&gt;
+      &lt;/div&gt;
+    );
+  };
+
+function UseEffectHook(){
+    const [show, setShow] = useState("1");
+    return (
+        &lt;&gt;
+            &lt;Person personId={show} /&gt;
+            &lt;div&gt;
+                Show:
+                &lt;button onClick={() =&gt; setShow("1")}&gt;button 1&lt;/button&gt;
+                &lt;button onClick={() =&gt; setShow("2")}&gt;button 2&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/&gt;
+    )
+}
+
+export default UseEffectHook;</pre></div>
+<p><code class="notranslate">Person</code> 组件参数 <code class="notranslate">personId</code> 发生变化， <code class="notranslate">useEffect()</code> 就会执行。组件第一次渲染时， <code class="notranslate">useEffect()</code> 也会执行。</p>
+<h4>需要清除的 effect</h4>
+<p>在 <code class="notranslate">class</code> 组件中，我们去监听原生 <code class="notranslate">DOM</code> 事件时会在 <code class="notranslate">componentDidMount</code> 这个生命周期中去做，因为在这里可以获取到已经挂载的真实 <code class="notranslate">DOM</code> 。我们也会在组件卸载的时候去取消事件监听避免内存泄露。那么在 <code class="notranslate">useEffect</code> 中该如何实现呢？</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+  <span class="pl-k">function</span> <span class="pl-en">handleClick</span><span class="pl-kos">(</span><span class="pl-s1">status</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+    <span class="pl-smi">document</span><span class="pl-kos">.</span><span class="pl-c1">title</span> <span class="pl-c1">=</span> <span class="pl-s">`You clicked <span class="pl-s1"><span class="pl-kos">${</span><span class="pl-s1">count</span><span class="pl-kos">}</span></span> times`</span><span class="pl-kos">;</span>
+  <span class="pl-kos">}</span>
+
+  <span class="pl-smi">document</span><span class="pl-kos">.</span><span class="pl-c1">body</span><span class="pl-kos">.</span><span class="pl-en">addEventListener</span><span class="pl-kos">(</span><span class="pl-s">"click"</span><span class="pl-kos">,</span><span class="pl-s1">handleClick</span><span class="pl-kos">,</span><span class="pl-c1">false</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+  <span class="pl-k">return</span> <span class="pl-k">function</span> <span class="pl-en">cleanup</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+    <span class="pl-smi">document</span><span class="pl-kos">.</span><span class="pl-c1">body</span><span class="pl-kos">.</span><span class="pl-en">removeEventListener</span><span class="pl-kos">(</span><span class="pl-s">"click"</span><span class="pl-kos">,</span><span class="pl-s1">handleClick</span><span class="pl-kos">,</span><span class="pl-c1">false</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+  <span class="pl-kos">}</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span></pre></div>
+<p>通过在 <code class="notranslate">useEffect</code> 中返回一个函数，它便可以清理副作用。</p>
+<p>清理规则是：</p>
+<ul>
+<li><strong>首次渲染不会进行清理，会在下一次渲染，清除上一次的副作用；</strong></li>
+<li>*<em>卸载阶段也会执行清除操作。</em></li>
+</ul>
+<h3>useCallback</h3>
+<p>把内联回调函数及依赖项数组作为参数传入 <code class="notranslate">useCallback</code> ，它将返回该回调函数的 <code class="notranslate">memoized</code> 版本，该回调函数仅在某个依赖项改变时才会更新。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-s1">memoizedCallback</span> <span class="pl-c1">=</span> <span class="pl-en">useCallback</span><span class="pl-kos">(</span>
+  <span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+    <span class="pl-en">doSomething</span><span class="pl-kos">(</span><span class="pl-s1">a</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+  <span class="pl-kos">}</span><span class="pl-kos">,</span>
+  <span class="pl-kos">[</span><span class="pl-s1">a</span><span class="pl-kos">]</span><span class="pl-kos">,</span>
+<span class="pl-kos">)</span><span class="pl-kos">;</span></pre></div>
+<p>通俗来讲当参数 <code class="notranslate">a</code> 发生变化时，会返回一个新的函数引用赋值给 <code class="notranslate">memoizedCallback</code> 变量，因此这个变量就可以当做 <code class="notranslate">useEffect</code> 第二个参数。这样就有效的将逻辑分离出来。</p>
+<p>针对上述请求数据例子，我们使用 <code class="notranslate">useCallback</code> 改写下：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-smi">Person</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-kos">{</span> fetchData <span class="pl-kos">}</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">loading</span><span class="pl-kos">,</span> <span class="pl-s1">setLoading</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-c1">true</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">person</span><span class="pl-kos">,</span> <span class="pl-s1">setPerson</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-kos">{</span><span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+      <span class="pl-en">setLoading</span><span class="pl-kos">(</span><span class="pl-c1">true</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+       <span class="pl-en">fetchData</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">.</span><span class="pl-en">then</span><span class="pl-kos">(</span><span class="pl-s1">response</span> <span class="pl-c1">=&gt;</span> <span class="pl-s1">response</span><span class="pl-kos">.</span><span class="pl-en">json</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">)</span>
+        <span class="pl-kos">.</span><span class="pl-en">then</span><span class="pl-kos">(</span><span class="pl-s1">data</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+          <span class="pl-en">setPerson</span><span class="pl-kos">(</span><span class="pl-s1">data</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+          <span class="pl-en">setLoading</span><span class="pl-kos">(</span><span class="pl-c1">false</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+        <span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-s1">fetchData</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span> <span class="pl-c">//{2}</span>
+
+    <span class="pl-k">if</span> <span class="pl-kos">(</span><span class="pl-s1">loading</span> <span class="pl-c1">===</span> <span class="pl-c1">true</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+      <span class="pl-k">return</span> <span class="pl-kos">&lt;</span><span class="pl-smi">p</span><span class="pl-kos">&gt;</span><span class="pl-smi">Loading</span> ...<span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>p&gt;;</span><span class="pl-c1"></span>
+    <span class="pl-kos">}</span>
+
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+      <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">p</span><span class="pl-kos">&gt;</span><span class="pl-smi">You</span>'re viewing: {person.name}&lt;/p&gt;
+        &lt;p&gt;Height: {person.height}&lt;/p&gt;
+        &lt;p&gt;Mass: {person.mass}&lt;/p&gt;
+      &lt;/div&gt;
+    );
+  };
+
+function UseEffectHook(){
+    const [personId, setPersonId] = useState("1");
+
+    const fetchData = useCallback(()=&gt;{
+       return fetch(`https://v1/api/people/${personId}/`);
+    },[personId]);//{1}
+
+    return (
+        &lt;&gt;
+            &lt;Person fetchData={fetchData} /&gt;
+            &lt;div&gt;
+                Show:
+                &lt;button onClick={() =&gt; setPersonId("1")}&gt;button 1&lt;/button&gt;
+                &lt;button onClick={() =&gt; setPersonId("2")}&gt;button 2&lt;/button&gt;
+            &lt;/div&gt;
+        &lt;/&gt;
+    )
+}</pre></div>
+<p>经过 <code class="notranslate">useCallback</code> 包装过的函数可以当作普通变量作为 <code class="notranslate">useEffect</code> 的依赖。 <code class="notranslate">useCallback</code>做的事情，就是在其依赖变化时，返回一个新的函数引用，触发 <code class="notranslate">useEffect</code> 的依赖变化，并激活其重新执行。</p>
+<p>现在我们不需要在 <code class="notranslate">useEffect</code> 依赖中直接对比 <code class="notranslate">personId</code> 参数了，而可以直接对比 <code class="notranslate">fetchData</code> 函数。 <code class="notranslate">useEffect</code> 只要关心 <code class="notranslate">fetchData</code> 函数是否变化，而 <code class="notranslate">fetchData</code> 参数的变化在 <code class="notranslate">useCallback</code> 时关心，能做到：依赖不丢、逻辑内聚，从而容易维护。</p>
+<h3>useMemo</h3>
+<p>把"创建"函数和依赖项数组作为参数传入 <code class="notranslate">useMemo</code> ，它仅会在某个依赖项改变时才重新计算 <code class="notranslate">memoized</code> 值。 <strong>这种优化有助于避免在每次渲染时都进行高开销的计算</strong>。</p>
+<p>跟 <code class="notranslate">useCallback</code> 非常类似的功能， <code class="notranslate">useMemo</code> 相当于 <code class="notranslate">Class</code> 组件的 <code class="notranslate">pureComponent</code> 。</p>
+<p>我们再接着上述案例使用 <code class="notranslate">useMemo</code> 修改下：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-s1">fetchData</span> <span class="pl-c1">=</span> <span class="pl-en">useMemo</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+	<span class="pl-k">return</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-en">fetch</span><span class="pl-kos">(</span><span class="pl-s">`https://v1/api/people/<span class="pl-s1"><span class="pl-kos">${</span><span class="pl-s1">personId</span><span class="pl-kos">}</span></span>/`</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-s1">personId</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span></pre></div>
+<p>其余都不变，唯独多加了一层 <code class="notranslate">()=&gt;fn</code> 结构。</p>
+<p><strong>如果没有提供依赖项数组， <code class="notranslate">useMemo</code> 在每次渲染时都会计算新的值。</strong></p>
+<h3>useRef</h3>
+<p>学习 <code class="notranslate">useRef</code> 之前，我们先搞清楚几个问题。</p>
+<ol>
+<li><code class="notranslate">Refs</code> 是什么；</li>
+<li>类组件如何创建 <code class="notranslate">Refs</code> ；</li>
+<li><code class="notranslate">forwardRef</code> ；</li>
+<li>函数组件如何创建 <code class="notranslate">Refs</code> 。</li>
+</ol>
+<h4>Refs</h4>
+<p><code class="notranslate">Refs</code> 是一个获取 <code class="notranslate">DOM</code> 节点或 <code class="notranslate">React</code> 元素实例的工具。在 <code class="notranslate">React</code> 中 <code class="notranslate">Refs</code> 提供了一种方式，允许用户访问 <code class="notranslate">DOM</code> 节点或 <code class="notranslate">render</code> 方法中创建的 <code class="notranslate">React</code> 元素。</p>
+<h4>类组件如何创建 ref</h4>
+<ul>
+<li>当 <code class="notranslate">ref</code> 属性用于 <code class="notranslate">HTML</code> 元素时，构造函数中使用 <code class="notranslate">React.createRef()</code> 创建的 <code class="notranslate">ref</code> 接收底层 <code class="notranslate">DOM</code> 元素作为其 <code class="notranslate">current</code> 属性；</li>
+<li>当 <code class="notranslate">ref</code> 属性用于自定义 <code class="notranslate">class</code> 组件时， <code class="notranslate">ref</code> 对象接收组件的挂载实例作为其 <code class="notranslate">current</code> 属性；</li>
+<li><strong>你不能在函数组件上使用 <code class="notranslate">ref</code> 属性</strong>，因为他们没有实例。</li>
+</ul>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">class</span> <span class="pl-smi">Child</span> <span class="pl-k">extends</span> <span class="pl-smi">React</span><span class="pl-kos">.</span><span class="pl-c1">Component</span><span class="pl-kos">{</span>
+    <span class="pl-en">render</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+        <span class="pl-k">return</span> <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span><span class="pl-smi">Child</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>div&gt;;</span><span class="pl-c1"></span>
+    <span class="pl-kos">}</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">class</span> <span class="pl-smi">ClassRefComp</span> <span class="pl-k">extends</span> <span class="pl-smi">React</span><span class="pl-kos">.</span><span class="pl-c1">Component</span> <span class="pl-kos">{</span>
+    <span class="pl-en">constructor</span><span class="pl-kos">(</span><span class="pl-s1">props</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+      <span class="pl-smi">super</span><span class="pl-kos">(</span><span class="pl-s1">props</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-smi">this</span><span class="pl-kos">.</span><span class="pl-c1">myRef</span> <span class="pl-c1">=</span> <span class="pl-smi">React</span><span class="pl-kos">.</span><span class="pl-en">createRef</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+    <span class="pl-en">componentDidMount</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+        <span class="pl-smi">console</span><span class="pl-kos">.</span><span class="pl-en">log</span><span class="pl-kos">(</span><span class="pl-smi">this</span><span class="pl-kos">.</span><span class="pl-c1">myRef</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+    <span class="pl-en">render</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+      <span class="pl-k">return</span> <span class="pl-kos">(</span>
+          <span class="pl-kos">&lt;</span><span class="pl-smi"></span><span class="pl-kos">&gt;</span>
+            <span class="pl-kos">{</span><span class="pl-c">/* this.myRef.current 获取到 Child 实例 */</span><span class="pl-kos">}</span>
+            <span class="pl-c1">&lt;</span><span class="pl-smi">Child</span> <span class="pl-s1">ref</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-s1">this</span><span class="pl-kos">.</span>myRef<span class="pl-kos">}</span> <span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+            <span class="pl-kos">{</span><span class="pl-c">/* this.myRef.current 获取 div 元素 */</span><span class="pl-kos">}</span>
+            <span class="pl-kos">{</span><span class="pl-c">/* &lt;div ref={this.myRef} /&gt; */</span><span class="pl-kos">}</span>
+          <span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>&gt;</span><span class="pl-c1"></span>
+      <span class="pl-kos">)</span>
+    <span class="pl-kos">}</span>
+<span class="pl-kos">}</span></pre></div>
+<p><strong>不能在函数组件上使用 <code class="notranslate">ref</code> 属性</strong></p>
+<p>例如下面做会报错：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">Child2</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span><span class="pl-s1">不能在函数组件上使用</span> <span class="pl-s1">ref</span> <span class="pl-s1">属性</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>div&gt;</span><span class="pl-c1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">class</span> <span class="pl-smi">ClassRefComp</span> <span class="pl-k">extends</span> <span class="pl-smi">React</span><span class="pl-kos">.</span><span class="pl-c1">Component</span> <span class="pl-kos">{</span>
+    <span class="pl-en">constructor</span><span class="pl-kos">(</span><span class="pl-s1">props</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+      <span class="pl-smi">super</span><span class="pl-kos">(</span><span class="pl-s1">props</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-smi">this</span><span class="pl-kos">.</span><span class="pl-c1">myRef</span> <span class="pl-c1">=</span> <span class="pl-smi">React</span><span class="pl-kos">.</span><span class="pl-en">createRef</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+    <span class="pl-en">componentDidMount</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+        <span class="pl-smi">console</span><span class="pl-kos">.</span><span class="pl-en">log</span><span class="pl-kos">(</span><span class="pl-smi">this</span><span class="pl-kos">.</span><span class="pl-c1">myRef</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+    <span class="pl-en">render</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+      <span class="pl-k">return</span> <span class="pl-kos">(</span>
+          <span class="pl-c1">&lt;</span><span class="pl-c1">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-smi">Child2</span> <span class="pl-s1">ref</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-c1">this</span><span class="pl-kos">.</span><span class="pl-c1">myRef</span><span class="pl-kos">}</span> <span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+          <span class="pl-c1">&lt;</span><span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+      <span class="pl-kos">)</span>
+    <span class="pl-kos">}</span>
+<span class="pl-kos">}</span></pre></div>
+<p><code class="notranslate">Child2</code> 是函数组件，不能使用 <code class="notranslate">ref</code> 属性，因为他们没有实例，解决方案：</p>
+<ol>
+<li>改成 <code class="notranslate">class</code> 组件</li>
+<li><code class="notranslate">React.forwardRef</code> 进行包装</li>
+</ol>
+<h4>React.forwardRef</h4>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">let</span> <span class="pl-smi">Child2</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">props</span><span class="pl-kos">,</span><span class="pl-s1">ref</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos"></span> <span class="pl-s1">ref</span><span class="pl-c1">=</span><span class="pl-kos">{</span>ref<span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-s1">不能在函数组件上使用</span> <span class="pl-s1">ref</span> <span class="pl-s1">属性</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>div&gt;</span><span class="pl-c1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-smi">Child2</span> <span class="pl-c1">=</span> <span class="pl-smi">React</span><span class="pl-kos">.</span><span class="pl-en">forwardRef</span><span class="pl-kos">(</span><span class="pl-smi">Child2</span><span class="pl-kos">)</span><span class="pl-kos">;</span></pre></div>
+<p>代码解释：</p>
+<ol>
+<li>我们通过调用 <code class="notranslate">React.createRef</code> 创建了一个 <code class="notranslate">React ref</code> 并将其赋值给 <code class="notranslate">myRef</code> 变量；</li>
+<li>我们通过指定 <code class="notranslate">ref</code> 为 <code class="notranslate">JSX</code> 属性，将其向下传递给 <code class="notranslate">&lt;Child2 ref={this.myRef}&gt;</code> ；</li>
+<li><code class="notranslate">React</code> 传递 <code class="notranslate">ref</code> 给 <code class="notranslate">forwardRef</code> 内函数 <code class="notranslate">(props, ref) =&gt; ...</code>，作为其第二个参数；</li>
+<li>我们向下转发该 <code class="notranslate">ref</code> 参数到 <code class="notranslate">&lt;div ref={ref}&gt;</code>，将其指定为 <code class="notranslate">JSX</code> 属性；</li>
+<li>当 <code class="notranslate">ref</code> 挂载完成， <code class="notranslate">ref.current</code> 将指向 <code class="notranslate">&lt;div&gt;</code> DOM 节点。</li>
+</ol>
+<p><code class="notranslate">React.forwardRef</code> <strong>解决了，函数组件没有实例，无法像类组件一样可以接收 <code class="notranslate">ref</code> 属性的问题</strong></p>
+<p>到这里想必你也应该清楚 <code class="notranslate">Refs</code> 是什么以及在类组件中如何使用了，至于它的一些其他用法例如"回调 <code class="notranslate">Refs</code> "、"高阶组件中转发 <code class="notranslate">Refs</code> "这里就不一一讲解了。</p>
+<h4>函数组件如何创建ref</h4>
+<p><code class="notranslate">useRef</code> 返回一个可变的 <code class="notranslate">ref</code> 对象，其 <code class="notranslate">current</code> 属性被初始化为传入的参数（ <code class="notranslate">initialValue</code> ）。返回的 <code class="notranslate">ref</code> 对象在组件的整个生命周期内保持不变。</p>
+<p><code class="notranslate">useRef</code> 的作用：</p>
+<ul>
+<li>获取 <code class="notranslate">DOM</code> 元素的节点；</li>
+<li>获取子组件的实例；</li>
+<li>渲染周期之间共享数据的存储（ <code class="notranslate">state</code> 不能存储跨渲染周期的数据，因为 <code class="notranslate">state</code> 的保存会触发组件重渲染）。</li>
+</ul>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">FuncRefComp</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-s1">inputRef</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-c1">null</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">const</span> <span class="pl-en">handleChange</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-smi">console</span><span class="pl-kos">.</span><span class="pl-en">log</span><span class="pl-kos">(</span><span class="pl-s1">inputRef</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">.</span><span class="pl-c1">value</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-c1">&lt;</span><span class="pl-smi">input</span> <span class="pl-s1">ref</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-c1">inputRef</span><span class="pl-kos">}</span> <span class="pl-s1">type</span><span class="pl-c1">=</span><span class="pl-s">"text"</span> <span class="pl-s1">onChange</span><span class="pl-c1">=</span><span class="pl-kos">{</span>handleChange<span class="pl-kos">}</span> <span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<h3>useImperativeHandle（不常用）</h3>
+<ul>
+<li><code class="notranslate">useImperativeHandle</code> 可以让你在使用 <code class="notranslate">ref</code> 时，自定义暴露给父组件的实例值，不能让父组件想干嘛就干嘛；</li>
+<li>在大多数情况下，应当避免使用 <code class="notranslate">ref</code> 这样的命令式代码。 <code class="notranslate">useImperativeHandle</code> 应当与 <code class="notranslate">forwardRef</code> 一起使用；</li>
+<li>父组件可以使用操作子组件中的多个 <code class="notranslate">ref</code> 。</li>
+</ul>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-en">useImperativeHandle</span><span class="pl-kos">(</span><span class="pl-s1">ref</span><span class="pl-kos">,</span> <span class="pl-s1">createHandle</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-s1">deps</span><span class="pl-kos">]</span><span class="pl-kos">)</span></pre></div>
+<p>示例：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">UseImperativeHandleRef</span><span class="pl-kos">(</span><span class="pl-s1">props</span><span class="pl-kos">,</span> <span class="pl-s1">ref</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-s1">inputRef</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-en">useImperativeHandle</span><span class="pl-kos">(</span><span class="pl-s1">ref</span><span class="pl-kos">,</span> <span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">(</span><span class="pl-kos">{</span>
+      <span class="pl-en">focus</span>: <span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+        <span class="pl-s1">inputRef</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">.</span><span class="pl-en">focus</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span>
+    <span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">&lt;</span><span class="pl-smi">input</span><span class="pl-kos"></span> <span class="pl-s1">ref</span><span class="pl-c1">=</span><span class="pl-kos">{</span>inputRef<span class="pl-kos">}</span> <span class="pl-c1">/</span><span class="pl-c1">&gt;</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-smi">UseImperativeHandleRef</span> <span class="pl-c1">=</span> <span class="pl-en">forwardRef</span><span class="pl-kos">(</span><span class="pl-smi">UseImperativeHandleRef</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">UseRefHook</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-s1">inputRef</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-smi">console</span><span class="pl-kos">.</span><span class="pl-en">log</span><span class="pl-kos">(</span><span class="pl-s1">inputRef</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span><span class="pl-kos">)</span>
+    <span class="pl-k">return</span> <span class="pl-kos">&lt;</span><span class="pl-smi">UseImperativeHandleRef</span><span class="pl-kos"></span> <span class="pl-s1">ref</span><span class="pl-c1">=</span><span class="pl-kos">{</span>inputRef<span class="pl-kos">}</span> <span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+<span class="pl-kos">}</span></pre></div>
+<p>在本例中，渲染 <code class="notranslate">&lt;UseImperativeHandleRef ref={inputRef} /&gt;</code> 的父组件可以调用 <code class="notranslate">inputRef.current.focus()</code>。</p>
+<h3>useLayoutEffect（不常用）</h3>
+<ul>
+<li><code class="notranslate">useEffect</code> 在全部渲染完毕后才会执行；</li>
+<li><code class="notranslate">useLayoutEffect</code> 会在 浏览器 <code class="notranslate">layout</code> 之后， <code class="notranslate">painting</code> 之前执行；</li>
+<li>使用方式同 <code class="notranslate">useEffect</code> 相同，但它会在所有的 <code class="notranslate">DOM</code> 变更之后同步调用 <code class="notranslate">effect</code> ；</li>
+<li>可以使用它来读取 <code class="notranslate">DOM</code> 布局并同步触发重渲染；</li>
+<li>在浏览器执行绘制之前 <code class="notranslate">useLayoutEffect</code> 内部的更新计划将被同步刷新；</li>
+<li>尽可能使用标准的 <code class="notranslate">useEffect</code> 以避免阻塞视图更新。</li>
+</ul>
+<p><a target="_blank" rel="noopener noreferrer" href=""><img src="" alt="image.png" style="max-width: 100%;"></a></p>
+<h2>自定义 Hook</h2>
+<p>如果函数的名字以 <code class="notranslate">use</code> 开头，并且调用了其他的 <code class="notranslate">Hook</code> ，则就称其为一个自定义 <code class="notranslate">Hook</code> 。</p>
+<p><code class="notranslate">Hook</code> <strong>是一种复用状态逻辑的方式，它不复用 <code class="notranslate">state</code> 本身，事实上 <code class="notranslate">Hook</code> 的每次调用都有一个完全独立的 <code class="notranslate">state</code> 。</strong></p>
+<p>简单的自定义 <code class="notranslate">Hook</code> ：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-en">useTitle</span><span class="pl-kos">(</span><span class="pl-s1">title</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-smi">document</span><span class="pl-kos">.</span><span class="pl-c1">title</span> <span class="pl-c1">=</span> <span class="pl-s1">title</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-s1">title</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span></pre></div>
+<p>使用：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">CustomHook</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-en">useTitle</span><span class="pl-kos">(</span><span class="pl-s">'my use title'</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span><span class="pl-smi">CustomHook</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>div&gt;</span><span class="pl-c1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<p>我们来看一个稍微复杂点的例子，通过自定义 <code class="notranslate">hook</code> 实现 <code class="notranslate">input</code> 双向数据绑定。</p>
+<h3>input 实现双向数据绑定</h3>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-en">useBind</span><span class="pl-kos">(</span><span class="pl-s1">initVal</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">let</span> <span class="pl-kos">[</span><span class="pl-s1">value</span><span class="pl-kos">,</span><span class="pl-s1">setValue</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-s1">initVal</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">let</span> <span class="pl-en">onChange</span> <span class="pl-c1">=</span> <span class="pl-k">function</span><span class="pl-kos">(</span><span class="pl-s1">event</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+        <span class="pl-en">setValue</span><span class="pl-kos">(</span><span class="pl-s1">event</span><span class="pl-kos">.</span><span class="pl-c1">currentTarget</span><span class="pl-kos">.</span><span class="pl-c1">value</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+    <span class="pl-k">return</span> <span class="pl-kos">{</span>
+        value<span class="pl-kos">,</span>
+        onChange
+    <span class="pl-kos">}</span>
+<span class="pl-kos">}</span></pre></div>
+<p>使用：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">function</span> <span class="pl-smi">CustomHook</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-s1">valueObj</span> <span class="pl-c1">=</span> <span class="pl-en">useBind</span><span class="pl-kos">(</span><span class="pl-s">""</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">&lt;</span><span class="pl-smi">input</span><span class="pl-kos"></span> <span class="pl-kos">{</span>...<span class="pl-s1">valueObj</span><span class="pl-kos">}</span> <span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+<span class="pl-kos">}</span></pre></div>
+<p>写到这里应该可以感受到 <code class="notranslate">hook</code> 的逻辑复用的能力。</p>
+<p>对比 <code class="notranslate">HOC</code> ，大量使用  <code class="notranslate">HOC</code> 的情况下让我们的代码变得嵌套层级非常深，使用自定义 <code class="notranslate">hook</code> ，我们可以实现扁平式的状态逻辑复用，而避免了大量的组件嵌套。</p>
+<p>既然自定义 <code class="notranslate">Hook</code> 这么香，那么有什么优秀的轮子值得我们来深入学习吗？</p>
+<p>阿里开源的 <code class="notranslate">ahooks</code>  。它是一个 <code class="notranslate">React Hooks</code> 库，致力提供常用且高质量的 <code class="notranslate">Hooks</code> 。</p>
+<p>首先安装： <code class="notranslate">npm install ahooks --save</code> </p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">import</span> <span class="pl-smi">React</span> <span class="pl-k">from</span> <span class="pl-s">"react"</span><span class="pl-kos">;</span>
+<span class="pl-k">import</span> <span class="pl-kos">{</span> <span class="pl-s1">useToggle</span> <span class="pl-kos">}</span> <span class="pl-k">from</span> <span class="pl-s">"ahooks"</span><span class="pl-kos">;</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">AHooks</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span> <span class="pl-s1">state</span><span class="pl-kos">,</span> <span class="pl-kos">{</span> toggle <span class="pl-kos">}</span> <span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useToggle</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">p</span><span class="pl-kos">&gt;</span><span class="pl-smi">Current</span> <span class="pl-smi">Boolean</span>: <span class="pl-kos">{</span><span class="pl-c1">String</span><span class="pl-kos">(</span><span class="pl-s1">state</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-kos"></span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>p&gt;</span><span class="pl-c1"></span>
+        <span class="pl-c1">&lt;</span><span class="pl-s1">p</span><span class="pl-c1">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">button</span> <span class="pl-smi">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-c1">toggle</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-smi">Toggle</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>button&gt;</span>
+<span class="pl-pds">        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>p</span><span class="pl-c1">&gt;</span>
+        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span><span class="pl-smi">div</span><span class="pl-c1">&gt;</span>
+    <span class="pl-kos">)</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">export</span> <span class="pl-k">default</span> <span class="pl-smi">AHooks</span><span class="pl-kos">;</span></pre></div>
+<p>它的使用可以自行查阅文档，我们今天挑选几个常用 <code class="notranslate">Hook</code> 来分析其源码。</p>
+<h3>useUpdate</h3>
+<p>强制组件重新渲染的 <code class="notranslate">hook</code> </p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-en">useUpdate</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-kos">,</span> <span class="pl-s1">setState</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-c1">0</span><span class="pl-kos">)</span><span class="pl-kos">;</span><span class="pl-c">//{1}</span>
+
+    <span class="pl-k">return</span> <span class="pl-en">useCallback</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-en">setState</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-s1">num</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span><span class="pl-k">return</span> <span class="pl-s1">num</span> <span class="pl-c1">+</span> <span class="pl-c1">1</span><span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">)</span><span class="pl-kos">;</span><span class="pl-c">//{2}</span>
+<span class="pl-kos">}</span><span class="pl-kos">;</span></pre></div>
+<p>分析：</p>
+<ul>
+<li>{1} 定义一个初始状态；</li>
+<li>{2} 调用 <code class="notranslate">setState</code> 方法则会导致 <code class="notranslate">state</code> 变化，从而刷新组件。</li>
+</ul>
+<h3>useUpdateEffect</h3>
+<p>一个只在依赖更新时执行的 <code class="notranslate">useEffect hook</code> 。使用上与 <code class="notranslate">useEffect</code> 完全相同，只是它忽略了首次渲染，且只在依赖项更新时运行。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-en">useUpdateEffect</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">effect</span><span class="pl-kos">,</span> <span class="pl-s1">deps</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-s1">isMounted</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-c1">false</span><span class="pl-kos">)</span><span class="pl-kos">;</span> <span class="pl-c">//{1}</span>
+
+    <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+      <span class="pl-c">// {2}</span>
+      <span class="pl-k">if</span> <span class="pl-kos">(</span><span class="pl-c1">!</span><span class="pl-s1">isMounted</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+        <span class="pl-s1">isMounted</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-c1">true</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span> <span class="pl-k">else</span> <span class="pl-kos">{</span>
+        <span class="pl-k">return</span> <span class="pl-en">effect</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span>
+    <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-s1">deps</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+ <span class="pl-kos">}</span><span class="pl-kos">;</span></pre></div>
+<p>解析：</p>
+<ul>
+<li>{1} 使用 <code class="notranslate">useRef</code> 存一个布尔值；</li>
+<li>{2} 当首次执行 <code class="notranslate">useEffect</code> 时，设置其值为 <code class="notranslate">true</code> 。再次执行时就可以执行 <code class="notranslate">effect</code> 回调函数。</li>
+</ul>
+<h3>usePersistFn</h3>
+<p>持久化 <code class="notranslate">function</code> 的 <code class="notranslate">Hook</code> ，在某些场景中，你可能会需要用 <code class="notranslate">useCallback</code> 记住一个回调，但由于内部函数必须经常重新创建，记忆效果不是很好，导致子组件重复 <code class="notranslate">render</code> 。对于超级复杂的子组件，重新渲染会对性能造成影响。通过 <code class="notranslate">usePersistFn</code> ，可以保证函数地址永远不会变化。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate">  <span class="pl-k">function</span> <span class="pl-en">usePersistFn</span><span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-s1">ref</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+      <span class="pl-k">throw</span> <span class="pl-k">new</span> <span class="pl-smi">Error</span><span class="pl-kos">(</span><span class="pl-s">'Cannot call function while rendering.'</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-s1">ref</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-s1">fn</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">const</span> <span class="pl-s1">persistFn</span> <span class="pl-c1">=</span> <span class="pl-en">useCallback</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">(</span>...<span class="pl-s1">args</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-s1">ref</span><span class="pl-kos">.</span><span class="pl-en">current</span><span class="pl-kos">(</span>...<span class="pl-s1">args</span><span class="pl-kos">)</span><span class="pl-kos">)</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-s1">ref</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">return</span> <span class="pl-s1">persistFn</span><span class="pl-kos">;</span>
+  <span class="pl-kos">}</span></pre></div>
+<p>解析： <code class="notranslate">useCallback</code> 的第一个参数传入 <code class="notranslate">ref</code> ，由于 <code class="notranslate">ref</code> 在整个生命周期内是不会发生变化的，因此 <code class="notranslate">useCallback</code> 的返回值不会更新。</p>
+<h3>useMount and useUnmount</h3>
+<p>组件挂载和组件卸载生命周期 <code class="notranslate">Hook</code> 。</p>
+<p>使用示例：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">const</span> <span class="pl-smi">MyComponent</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+    <span class="pl-en">useMount</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+      <span class="pl-smi">console</span><span class="pl-kos">.</span><span class="pl-en">log</span><span class="pl-kos">(</span><span class="pl-s">'mount'</span><span class="pl-kos">)</span><span class="pl-kos">;</span> <span class="pl-c">// 挂载时触发</span>
+    <span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-en">useUnmount</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+        <span class="pl-smi">console</span><span class="pl-kos">.</span><span class="pl-en">log</span><span class="pl-kos">(</span><span class="pl-s">'unmount'</span><span class="pl-kos">)</span><span class="pl-kos">;</span> <span class="pl-c">// 卸载时触发</span>
+    <span class="pl-kos">}</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span><span class="pl-smi">Hello</span> <span class="pl-smi">World</span><span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div&gt;;
+  <span class="pl-kos">}</span><span class="pl-kos">;</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">CustomHook</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">state</span><span class="pl-kos">,</span> <span class="pl-kos">{</span> toggle <span class="pl-kos">}</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useToggle</span><span class="pl-kos">(</span><span class="pl-c1">false</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+            <span class="pl-kos">&lt;</span><span class="pl-smi">button</span> <span class="pl-s1">type</span><span class="pl-c1">=</span><span class="pl-s">"button"</span> <span class="pl-s1">onClick</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-s1">toggle</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">}</span><span class="pl-kos">&gt;</span>
+                <span class="pl-kos">{</span><span class="pl-c1">state</span> ? <span class="pl-s">'unmount'</span> : <span class="pl-s">'mount'</span><span class="pl-kos">}</span>
+            <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>button&gt;
+            <span class="pl-kos">{</span><span class="pl-s1">state</span> <span class="pl-c1">&amp;&amp;</span> <span class="pl-kos">&lt;</span><span class="pl-smi">MyComponent</span><span class="pl-kos"></span> <span class="pl-pds"><span class="pl-c1">/</span>&gt;}</span>
+<span class="pl-pds">        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span><span class="pl-s1"></span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span></pre></div>
+<p>源码分析：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"># <span class="pl-s1">mount</span>
+<span class="pl-k">const</span> <span class="pl-en">useMount</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+  <span class="pl-k">const</span> <span class="pl-s1">fnPersist</span> <span class="pl-c1">=</span> <span class="pl-en">usePersistFn</span><span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+  <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+    <span class="pl-k">if</span> <span class="pl-kos">(</span><span class="pl-s1">fnPersist</span> <span class="pl-c1">&amp;&amp;</span> <span class="pl-k">typeof</span> <span class="pl-s1">fnPersist</span> <span class="pl-c1">===</span> <span class="pl-s">'function'</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+      <span class="pl-en">fnPersist</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span>
+  <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span><span class="pl-kos">;</span>
+
+# <span class="pl-s1">unmount</span>
+<span class="pl-k">const</span> <span class="pl-en">useUnmount</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+  <span class="pl-k">const</span> <span class="pl-s1">fnPersist</span> <span class="pl-c1">=</span> <span class="pl-en">usePersistFn</span><span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+  <span class="pl-en">useEffect</span><span class="pl-kos">(</span>
+    <span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+      <span class="pl-k">if</span> <span class="pl-kos">(</span><span class="pl-s1">fnPersist</span> <span class="pl-c1">&amp;&amp;</span> <span class="pl-k">typeof</span> <span class="pl-s1">fnPersist</span> <span class="pl-c1">===</span> <span class="pl-s">'function'</span><span class="pl-kos">)</span> <span class="pl-kos">{</span>
+        <span class="pl-en">fnPersist</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span>
+    <span class="pl-kos">}</span><span class="pl-kos">,</span>
+    <span class="pl-kos">[</span><span class="pl-kos">]</span><span class="pl-kos">,</span>
+  <span class="pl-kos">)</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span><span class="pl-kos">;</span></pre></div>
+<p>以上是稍微简单的 <code class="notranslate">hook</code> 编写，通过编写这些 <code class="notranslate">hook</code> ，至少让我们知道，自定义 <code class="notranslate">hook</code> 并没有想象的那么复杂，接下来看几个有点难度的 <code class="notranslate">hook</code> 。</p>
+<h3>useDebounce</h3>
+<p>用来处理防抖值的 <code class="notranslate">Hook</code> 。</p>
+<p>示例： <code class="notranslate">DebouncedValue</code> 只会在输入结束 <code class="notranslate">500ms</code> 后变化。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">import</span> <span class="pl-smi">React</span><span class="pl-kos">,</span><span class="pl-kos">{</span><span class="pl-s1">useState</span><span class="pl-kos">}</span> <span class="pl-k">from</span> <span class="pl-s">"react"</span><span class="pl-kos">;</span>
+<span class="pl-k">import</span> <span class="pl-kos">{</span><span class="pl-s1">useDebounce</span><span class="pl-kos">}</span> <span class="pl-k">from</span> <span class="pl-s">"./customHooks"</span><span class="pl-kos">;</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">DebounceHook</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">value</span><span class="pl-kos">,</span> <span class="pl-s1">setValue</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">const</span> <span class="pl-s1">debouncedValue</span> <span class="pl-c1">=</span> <span class="pl-en">useDebounce</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">,</span>  <span class="pl-c1">500</span> <span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">input</span>
+                <span class="pl-smi">value</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-c1">value</span><span class="pl-kos">}</span>
+                <span class="pl-s1">onChange</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-s1">e</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-s1">setValue</span><span class="pl-kos">(</span><span class="pl-s1">e</span><span class="pl-kos">.</span><span class="pl-s1">target</span><span class="pl-kos">.</span><span class="pl-smi">value</span><span class="pl-kos">)</span> <span class="pl-kos">}</span>
+                <span class="pl-smi">placeholder</span><span class="pl-c1">=</span><span class="pl-s">"Typed value"</span>
+                <span class="pl-s1">style</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">{</span> <span class="pl-smi">width</span>: <span class="pl-c1">280</span> <span class="pl-kos">}</span><span class="pl-kos">}</span>
+            <span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">p</span> <span class="pl-s1">style</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">{</span> <span class="pl-c1">marginTop</span>: <span class="pl-c1">16</span> <span class="pl-kos">}</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-smi">DebouncedValue</span>: <span class="pl-kos">{</span>debouncedValue<span class="pl-kos">}</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>p&gt;</span>
+<span class="pl-pds">        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">export</span> <span class="pl-s1">default</span> <span class="pl-smi">DebounceHook</span><span class="pl-kos">;</span></pre></div>
+<p>实现：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate">  <span class="pl-k">const</span> <span class="pl-en">useDebounceFn</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">,</span><span class="pl-s1">wait</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+      <span class="pl-k">const</span> <span class="pl-s1">_wait</span> <span class="pl-c1">=</span>  <span class="pl-s1">wait</span> <span class="pl-c1">||</span> <span class="pl-c1">0</span><span class="pl-kos">;</span>
+
+      <span class="pl-k">const</span> <span class="pl-s1">timer</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-k">const</span> <span class="pl-s1">fnRef</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-s1">fnRef</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-s1">fn</span><span class="pl-kos">;</span>
+
+      <span class="pl-k">const</span> <span class="pl-s1">cancel</span> <span class="pl-c1">=</span> <span class="pl-en">useCallback</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-k">if</span><span class="pl-kos">(</span><span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+            <span class="pl-en">clearTimeout</span><span class="pl-kos">(</span><span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+        <span class="pl-kos">}</span>
+      <span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-kos">]</span><span class="pl-kos">)</span>
+
+      <span class="pl-k">const</span> <span class="pl-s1">run</span> <span class="pl-c1">=</span> <span class="pl-en">useCallback</span><span class="pl-kos">(</span><span class="pl-kos">(</span>...<span class="pl-s1">args</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+          <span class="pl-en">cancel</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+          <span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-en">setTimeout</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+            <span class="pl-s1">fnRef</span><span class="pl-kos">.</span><span class="pl-en">current</span><span class="pl-kos">(</span>...<span class="pl-s1">args</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+          <span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-s1">_wait</span><span class="pl-kos">)</span>
+      <span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-s1">_wait</span><span class="pl-kos">,</span><span class="pl-s1">cancel</span><span class="pl-kos">]</span><span class="pl-kos">)</span>
+
+      <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span> <span class="pl-s1">cancel</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+      <span class="pl-k">return</span> <span class="pl-kos">{</span>
+          run<span class="pl-kos">,</span>
+          cancel
+      <span class="pl-kos">}</span>
+  <span class="pl-kos">}</span>
+
+  <span class="pl-k">const</span> <span class="pl-en">useDebounce</span> <span class="pl-c1">=</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">,</span><span class="pl-s1">wait</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">debounced</span><span class="pl-kos">,</span> <span class="pl-s1">setDebounced</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">const</span> <span class="pl-kos">{</span> run <span class="pl-kos">}</span> <span class="pl-c1">=</span> <span class="pl-en">useDebounceFn</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+        <span class="pl-en">setDebounced</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-s1">wait</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+      <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+        <span class="pl-en">run</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-s1">value</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+      <span class="pl-k">return</span> <span class="pl-s1">debounced</span><span class="pl-kos">;</span>
+  <span class="pl-kos">}</span></pre></div>
+<p>解析：</p>
+<ul>
+<li><code class="notranslate">useDebounce</code> 收到 <code class="notranslate">value</code> 值变化时，会调用 <code class="notranslate">useEffect</code> 钩子；</li>
+<li><code class="notranslate">useEffect</code> 钩子调用 <code class="notranslate">run</code> 方法，也就是 <code class="notranslate">useDebounceFn</code> 这个钩子返回的；</li>
+<li><code class="notranslate">run</code> 方法中实现了防抖的核心功能。</li>
+</ul>
+<h3>useThrottle</h3>
+<p>用来处理节流值的 <code class="notranslate">Hook</code> 。节流的处理，一定时间内只触发一次。</p>
+<p>示例： <code class="notranslate">ThrottledValue</code> 每隔 <code class="notranslate">500ms</code>  变化一次。</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate"><span class="pl-k">import</span> <span class="pl-smi">React</span><span class="pl-kos">,</span><span class="pl-kos">{</span><span class="pl-s1">useState</span><span class="pl-kos">}</span> <span class="pl-k">from</span> <span class="pl-s">"react"</span><span class="pl-kos">;</span>
+<span class="pl-k">import</span> <span class="pl-kos">{</span><span class="pl-s1">useThrottle</span><span class="pl-kos">}</span> <span class="pl-k">from</span> <span class="pl-s">"./customHooks"</span><span class="pl-kos">;</span>
+
+<span class="pl-k">function</span> <span class="pl-smi">ThrottleHook</span> <span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">value</span><span class="pl-kos">,</span> <span class="pl-s1">setValue</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">const</span> <span class="pl-s1">throttledValue</span> <span class="pl-c1">=</span> <span class="pl-en">useThrottle</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">,</span>  <span class="pl-c1">500</span> <span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">return</span> <span class="pl-kos">(</span>
+        <span class="pl-kos">&lt;</span><span class="pl-smi">div</span><span class="pl-kos">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">input</span>
+                <span class="pl-smi">value</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-c1">value</span><span class="pl-kos">}</span>
+                <span class="pl-s1">onChange</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">(</span><span class="pl-s1">e</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-s1">setValue</span><span class="pl-kos">(</span><span class="pl-s1">e</span><span class="pl-kos">.</span><span class="pl-s1">target</span><span class="pl-kos">.</span><span class="pl-smi">value</span><span class="pl-kos">)</span><span class="pl-kos">}</span>
+                <span class="pl-smi">placeholder</span><span class="pl-c1">=</span><span class="pl-s">"Typed value"</span>
+                <span class="pl-s1">style</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">{</span> <span class="pl-smi">width</span>: <span class="pl-c1">280</span> <span class="pl-kos">}</span><span class="pl-kos">}</span>
+            <span class="pl-c1">/</span><span class="pl-c1">&gt;</span>
+            <span class="pl-c1">&lt;</span><span class="pl-s1">p</span> <span class="pl-s1">style</span><span class="pl-c1">=</span><span class="pl-kos">{</span><span class="pl-kos">{</span> <span class="pl-c1">marginTop</span>: <span class="pl-c1">16</span> <span class="pl-kos">}</span><span class="pl-kos">}</span><span class="pl-c1">&gt;</span><span class="pl-s1">throttledValue</span>: <span class="pl-kos">{</span>throttledValue<span class="pl-kos">}</span><span class="pl-c1">&lt;</span><span class="pl-pds"><span class="pl-c1">/</span>p&gt;</span>
+<span class="pl-pds">        <span class="pl-c1">&lt;</span><span class="pl-c1">/</span>div</span><span class="pl-c1">&gt;</span>
+    <span class="pl-kos">)</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">export</span> <span class="pl-s1">default</span> <span class="pl-smi">ThrottleHook</span><span class="pl-kos">;</span></pre></div>
+<p>实现：</p>
+<div class="highlight highlight-source-ts"><pre class="notranslate">  <span class="pl-k">const</span> <span class="pl-en">useThrottleFn</span> <span class="pl-c1">=</span> <span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">,</span><span class="pl-s1">wait</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-s1">_wait</span> <span class="pl-c1">=</span>  <span class="pl-s1">wait</span> <span class="pl-c1">||</span> <span class="pl-c1">0</span><span class="pl-kos">;</span>
+    <span class="pl-k">const</span> <span class="pl-s1">timer</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-k">const</span> <span class="pl-s1">fnRef</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-s1">fn</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+    <span class="pl-s1">fnRef</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-s1">fn</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">const</span> <span class="pl-s1">currentArgs</span> <span class="pl-c1">=</span> <span class="pl-en">useRef</span><span class="pl-kos">(</span><span class="pl-kos">[</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">const</span> <span class="pl-s1">cancel</span> <span class="pl-c1">=</span> <span class="pl-en">useCallback</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+      <span class="pl-k">if</span><span class="pl-kos">(</span><span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+          <span class="pl-en">clearTimeout</span><span class="pl-kos">(</span><span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span>
+      <span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-c1">undefined</span><span class="pl-kos">;</span>
+    <span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-kos">]</span><span class="pl-kos">)</span>
+
+    <span class="pl-k">const</span> <span class="pl-s1">run</span> <span class="pl-c1">=</span> <span class="pl-en">useCallback</span><span class="pl-kos">(</span><span class="pl-kos">(</span>...<span class="pl-s1">args</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+        <span class="pl-s1">currentArgs</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-s1">args</span><span class="pl-kos">;</span>
+        <span class="pl-k">if</span><span class="pl-kos">(</span><span class="pl-c1">!</span><span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span><span class="pl-kos">)</span><span class="pl-kos">{</span>
+            <span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-en">setTimeout</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+                <span class="pl-s1">fnRef</span><span class="pl-kos">.</span><span class="pl-en">current</span><span class="pl-kos">(</span>...<span class="pl-s1">args</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+                <span class="pl-s1">timer</span><span class="pl-kos">.</span><span class="pl-c1">current</span> <span class="pl-c1">=</span> <span class="pl-c1">undefined</span><span class="pl-kos">;</span>
+            <span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-s1">_wait</span><span class="pl-kos">)</span>
+        <span class="pl-kos">}</span>
+    <span class="pl-kos">}</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-s1">_wait</span><span class="pl-kos">,</span><span class="pl-s1">cancel</span><span class="pl-kos">]</span><span class="pl-kos">)</span>
+
+    <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span> <span class="pl-s1">cancel</span><span class="pl-kos">,</span><span class="pl-kos">[</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">return</span> <span class="pl-kos">{</span>
+        run<span class="pl-kos">,</span>
+        cancel
+    <span class="pl-kos">}</span>
+<span class="pl-kos">}</span>
+
+<span class="pl-k">const</span> <span class="pl-en">useThrottle</span> <span class="pl-c1">=</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">,</span><span class="pl-s1">wait</span><span class="pl-kos">)</span><span class="pl-c1">=&gt;</span><span class="pl-kos">{</span>
+    <span class="pl-k">const</span> <span class="pl-kos">[</span><span class="pl-s1">throttled</span><span class="pl-kos">,</span> <span class="pl-s1">setThrottled</span><span class="pl-kos">]</span> <span class="pl-c1">=</span> <span class="pl-en">useState</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+    <span class="pl-k">const</span> <span class="pl-kos">{</span> run <span class="pl-kos">}</span> <span class="pl-c1">=</span> <span class="pl-en">useThrottleFn</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+        <span class="pl-en">setThrottled</span><span class="pl-kos">(</span><span class="pl-s1">value</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-s1">wait</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+      <span class="pl-en">useEffect</span><span class="pl-kos">(</span><span class="pl-kos">(</span><span class="pl-kos">)</span> <span class="pl-c1">=&gt;</span> <span class="pl-kos">{</span>
+        <span class="pl-en">run</span><span class="pl-kos">(</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+      <span class="pl-kos">}</span><span class="pl-kos">,</span> <span class="pl-kos">[</span><span class="pl-s1">value</span><span class="pl-kos">]</span><span class="pl-kos">)</span><span class="pl-kos">;</span>
+
+      <span class="pl-k">return</span> <span class="pl-s1">throttled</span><span class="pl-kos">;</span>
+<span class="pl-kos">}</span></pre></div>
+<p>解析：</p>
+<ul>
+<li><code class="notranslate">useThrottle</code> 收到 <code class="notranslate">value</code> 值变化时，会调用 <code class="notranslate">useEffect</code> 钩子；</li>
+<li><code class="notranslate">useEffect</code> 钩子调用 <code class="notranslate">run</code> 方法，也就是 <code class="notranslate">useThrottleFn</code> 这个钩子返回的；</li>
+<li><code class="notranslate">run</code> 方法中实现了节流的核心方法，每次判断定时器是否开启，如果没有开启则开启定时器执行函数；</li>
+<li>因此不论输入频率多快，都是每隔一定时间才会触发函数的执行。</li>
+</ul>
+<h2>总结</h2>
+<p>通过本文，希望您可以快速掌握官方提供的常用 <code class="notranslate">Hook</code> 的使用，以及编写自定义 <code class="notranslate">Hook</code> 进行逻辑封装。</p>
+<ul>
+<li><a href="#heading-0" title="前言">前言</a></li>
+<li><a href="#heading-1" title="Hook 基础">Hook 基础</a>
+<ul>
+<li><a href="#heading-2" title="Hook 解决什么问题">Hook 解决什么问题</a></li>
+<li><a href="#heading-3" title="Hook 使用规则">Hook 使用规则</a></li>
+<li><a href="#heading-4" title="useState">useState</a></li>
+<li><a href="#heading-5" title="useReducer">useReducer</a></li>
+<li><a href="#heading-6" title="useContext">useContext</a></li>
+<li><a href="#heading-7" title="useEffect">useEffect</a>
+<ul>
+<li><a href="#heading-8" title="需要清除的 effect">需要清除的 effect</a></li>
+</ul>
+</li>
+<li><a href="#heading-9" title="useCallback">useCallback</a></li>
+<li><a href="#heading-10" title="useMemo">useMemo</a></li>
+<li><a href="#heading-11" title="useRef">useRef</a>
+<ul>
+<li><a href="#heading-12" title="Refs">Refs</a></li>
+<li><a href="#heading-13" title="类组件如何创建 ref">类组件如何创建 ref</a></li>
+<li><a href="#heading-14" title="React.forwardRef">React.forwardRef</a></li>
+<li><a href="#heading-15" title="函数组件如何创建ref">函数组件如何创建ref</a></li>
+</ul>
+</li>
+<li><a href="#heading-16" title="useImperativeHandle（不常用）">useImperativeHandle（不常用）</a></li>
+<li><a href="#heading-17" title="useLayoutEffect（不常用）">useLayoutEffect（不常用）</a></li>
+</ul>
+</li>
+<li><a href="#heading-18" title="自定义 Hook">自定义 Hook</a>
+<ul>
+<li><a href="#heading-19" title="input 实现双向数据绑定">input 实现双向数据绑定</a></li>
+<li><a href="#heading-20" title="useUpdate">useUpdate</a></li>
+<li><a href="#heading-21" title="useUpdateEffect">useUpdateEffect</a></li>
+<li><a href="#heading-22" title="usePersistFn">usePersistFn</a></li>
+<li><a href="#heading-23" title="useMount and useUnmount">useMount and useUnmount</a></li>
+<li><a href="#heading-24" title="useDebounce">useDebounce</a></li>
+<li><a href="#heading-25" title="useThrottle">useThrottle</a></li>
+</ul>
+</li>
+<li><a href="#heading-26" title="总结">总结</a></li>
+</ul></div>
+<div style="font-size:small;margin-top:8px;float:right;"></div>
+
+<button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
+<div class="comments" id="comments"></div>
+
+</div>
+    <div id="footer"><div id="footer1">Copyright © <span id="copyrightYear"></span> <a href="https://siranchao.github.io">Siran's Scribbles</a></div>
+<div id="footer2">
+    <span id="runday"></span><span>Powered by <a href="https://meekdai.com/Gmeek.html" target="_blank">Gmeek</a></span>
+</div>
+
+<script>
+var now=new Date();
+document.getElementById("copyrightYear").innerHTML=now.getFullYear();
+
+if(""!=""){
+    var startSite=new Date("");
+    var diff=now.getTime()-startSite.getTime();
+    var diffDay=Math.floor(diff/(1000*60*60*24));
+    document.getElementById("runday").innerHTML="网站运行"+diffDay+"天"+" • ";
+}
+</script></div>
+</body>
+<script>
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z', 'copy': 'M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z', 'check': 'M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'};
+var utterancesLoad=0;
+
+let themeSettings={
+    "dark": ["dark","moon","#00f0ff","dark-blue"],
+    "light": ["light","sun","#ff5000","github-light"],
+    "auto": ["auto","sync","","preferred-color-scheme"]
+};
+function changeTheme(mode, icon, color, utheme){
+    document.documentElement.setAttribute("data-color-mode",mode);
+    document.getElementById("themeSwitch").setAttribute("d",value=IconList[icon]);
+    document.getElementById("themeSwitch").parentNode.style.color=color;
+    if(utterancesLoad==1){utterancesTheme(utheme);}
+}
+function modeSwitch(){
+    let currentMode=document.documentElement.getAttribute('data-color-mode');
+    let newMode = currentMode === "light" ? "dark" : currentMode === "dark" ? "auto" : "light";
+    localStorage.setItem("meek_theme", newMode);
+    if(themeSettings[newMode]){
+        changeTheme(...themeSettings[newMode]);
+    }
+}
+function utterancesTheme(theme){
+    const message={type:'set-theme',theme: theme};
+    const iframe=document.getElementsByClassName('utterances-frame')[0];
+    iframe.contentWindow.postMessage(message,'https://utteranc.es');
+}
+if(themeSettings[theme]){changeTheme(...themeSettings[theme]);}
+console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 0;background:#02d81d;color:#fff");
+</script>
+
+<script>
+document.getElementById("pathHome").setAttribute("d",IconList["home"]);
+document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
+
+
+
+function openComments(){
+    cm=document.getElementById("comments");
+    cmButton=document.getElementById("cmButton");
+    cmButton.innerHTML="loading";
+    span=document.createElement("span");
+    span.setAttribute("class","AnimatedEllipsis");
+    cmButton.appendChild(span);
+
+    script=document.createElement("script");
+    script.setAttribute("src","https://utteranc.es/client.js");
+    script.setAttribute("repo","siranchao/siranchao.github.io");
+    script.setAttribute("issue-term","title");
+    
+    if(localStorage.getItem("meek_theme")=="dark"){script.setAttribute("theme","dark-blue");}
+    else if(localStorage.getItem("meek_theme")=="light") {script.setAttribute("theme","github-light");}
+    else{script.setAttribute("theme","preferred-color-scheme");}
+    
+    script.setAttribute("crossorigin","anonymous");
+    script.setAttribute("async","");
+    cm.appendChild(script);
+
+    int=self.setInterval("iFrameLoading()",200);
+}
+
+function iFrameLoading(){
+    var utterances=document.getElementsByClassName('utterances');
+    if(utterances.length==1){
+        if(utterances[0].style.height!=""){
+            utterancesLoad=1;
+            int=window.clearInterval(int);
+            document.getElementById("cmButton").style.display="none";
+            console.log("utterances Load OK");
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const createClipboardHTML = (codeContent, additionalClasses = '') => `
+        <pre class="notranslate"><code class="notranslate">${codeContent}</code></pre>
+        <div class="clipboard-container position-absolute right-0 top-0 ${additionalClasses}">
+            <clipboard-copy class="ClipboardButton btn m-2 p-0" role="button" style="display: inherit;">
+                <svg height="16" width="16" class="octicon octicon-copy m-2"><path d="${IconList["copy"]}"></path></svg>
+                <svg height="16" width="16" class="octicon octicon-check color-fg-success m-2 d-none"><path d="${IconList["check"]}"></path></svg>
+            </clipboard-copy>
+            <div class="copy-feedback">Copied!</div>
+        </div>
+    `;
+
+    const handleCodeElements = (selector = '') => {
+        document.querySelectorAll(selector).forEach(codeElement => {
+            const codeContent = codeElement.innerHTML;
+            const newStructure = document.createElement('div');
+            newStructure.className = 'snippet-clipboard-content position-relative overflow-auto';
+            newStructure.innerHTML = createClipboardHTML(codeContent);
+
+            const parentElement = codeElement.parentElement;
+            if (selector.includes('highlight')) {
+                parentElement.insertBefore(newStructure, codeElement.nextSibling);
+                parentElement.removeChild(codeElement);
+            } else {
+                parentElement.parentElement.replaceChild(newStructure, parentElement);
+            }
+        });
+    };
+
+    handleCodeElements('pre.notranslate > code.notranslate');
+    handleCodeElements('div.highlight > pre.notranslate');
+
+    let currentFeedback = null;
+    document.querySelectorAll('clipboard-copy').forEach(copyButton => {
+        copyButton.addEventListener('click', () => {
+            const codeContent = copyButton.closest('.snippet-clipboard-content').innerText;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            const copyIcon = copyButton.querySelector('.octicon-copy');
+            const checkIcon = copyButton.querySelector('.octicon-check');
+            const copyFeedback = copyButton.nextElementSibling;
+
+            if (currentFeedback && currentFeedback !== copyFeedback) {currentFeedback.style.display = 'none';}
+            currentFeedback = copyFeedback;
+
+            copyIcon.classList.add('d-none');
+            checkIcon.classList.remove('d-none');
+            copyFeedback.style.display = 'block';
+            copyButton.style.borderColor = 'var(--color-success-fg)';
+
+            setTimeout(() => {
+                copyIcon.classList.remove('d-none');
+                checkIcon.classList.add('d-none');
+                copyFeedback.style.display = 'none';
+                copyButton.style.borderColor = '';
+            }, 2000);
+        });
+    });
+});
+
+</script>
+
+
+</html>
